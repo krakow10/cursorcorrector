@@ -2,6 +2,7 @@
 
 #include "stdafx.h"
 #include <math.h>
+#include <fstream>
 #include <iostream>
 #include <windows.h>
 
@@ -22,7 +23,7 @@ struct boundary {
 	int cDot;
 	bool mouseState = true;//false=behind true=infront
 	bool mouseAlignment = false;//is the mouse between the left and right points
-								//which boundary will the mouse teleport to when this boundary is crossed
+	//which boundary will the mouse teleport to when this boundary is crossed
 	int teleportTarget;
 };
 
@@ -119,8 +120,18 @@ LRESULT __stdcall MouseHook(int nCode, WPARAM wParam, LPARAM lParam)
 					}
 					boundaryIndex++;
 					if (boundaryIndex == boundaryListLength) {
-						std::cout << "Boundaries successfully created" << std::endl;
+						std::cout << "Boundaries successfully created.  Saving to file cursorcorrector.boundaries.  Delete the file to make a new config." << std::endl;
 						creatingBoundaries = false;
+						std::ofstream file;
+						file.open("cursorcorrector.boundaries", std::ios::out | std::ios::binary | std::ios::trunc);
+						if (file.is_open()) {
+							file.write((char*)&boundaryListLength, sizeof(int));
+							file.write((char*)boundaryList, boundaryListLength * sizeof(boundary));
+							file.close();
+						}
+						else {
+							std::cout << "File failed to open!" << std::endl;
+						}
 					}
 					else {
 						std::cout << "Created boundary " << boundaryIndex << "/" << boundaryListLength << std::endl;
@@ -160,23 +171,37 @@ int main()
 	boundaryParity = false;
 	creatingBoundaries = true;
 	boundaryIndex = -1;
-	std::cout << "How many screen boundaries do you have?  For a MxN grid of screens there are M*(N-1)+(M-1)*N or 2*M*N-M-N boundaries." << std::endl;
-	std::cin >> boundaryListLength;
-	if (boundaryListLength > 24) {
-		std::cout << "Bruh you should just get the source code and write the boundaries in.  Do you seriously have over 16 monitors?  Who are you, Linus Sebastian?" << std::endl;
-		return 0;
-	}
-	else if (boundaryListLength <= 0) {
-		std::cout << "No boundaries huh... exactly why are you using this program?" << std::endl;
+	std::ifstream file;
+	file.open("cursorcorrector.boundaries", std::ios::in | std::ios::binary);
+	if (file.is_open()) {
+		std::cout << "Loading config from file." << std::endl;
+		//interpret int
+		file.read((char*)&boundaryListLength, sizeof(int));
+		//interpret everything else
+		boundaryList = new boundary[boundaryListLength];
+		file.read((char*)boundaryList, boundaryListLength * sizeof(boundary));
+		file.close();
+		boundaryIndex = boundaryListLength;
 		creatingBoundaries = false;
 	}
 	else {
-		boundaryIndex = 0;
-		boundaryListLength *= 2;
-		boundaryList = new boundary[boundaryListLength];
-		std::cout << "Click the corners of the screens on each boundary in the order depicted in the guide image (guide can be rotated 90 degrees for the order of vertical boundaries)" << std::endl;
+		std::cout << "How many screen boundaries do you have?  For a MxN grid of screens there are M*(N-1)+(M-1)*N or 2*M*N-M-N boundaries." << std::endl;
+		std::cin >> boundaryListLength;
+		if (boundaryListLength > 24) {
+			std::cout << "Bruh you should just get the source code and write the boundaries in.  Do you seriously have over 16 monitors?  Who are you, Linus Sebastian?" << std::endl;
+			return 0;
+		}
+		else if (boundaryListLength <= 0) {
+			std::cout << "No boundaries huh... exactly why are you using this program?" << std::endl;
+			creatingBoundaries = false;
+		}
+		else {
+			boundaryIndex = 0;
+			boundaryListLength *= 2;
+			boundaryList = new boundary[boundaryListLength];
+			std::cout << "Click the corners of the screens on each boundary in the order depicted in the guide image (guide can be rotated 90 degrees for the order of vertical boundaries)" << std::endl;
+		}
 	}
-
 	std::cout << "Press Enter to exit the program." << std::endl;
 	MSG msg;
 	while (GetMessage(&msg, NULL, 0, 0))
