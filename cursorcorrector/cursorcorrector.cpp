@@ -33,6 +33,7 @@ bool pointParity;
 bool boundaryParity;
 bool creatingBoundaries;
 int boundaryIndex;
+//boundary list info
 int boundaryListLength;
 boundary * boundaryList;
 
@@ -56,7 +57,7 @@ LRESULT __stdcall MouseHook(int nCode, WPARAM wParam, LPARAM lParam)
 				GetCursorPos(&Cursor);
 				int x = Cursor.x;//GET_X_LPARAM(lParam)
 				int y = Cursor.y;//GET_Y_LPARAM(lParam)
-								 //std::cout << "x" << x << " y" << y << std::endl;
+				//std::cout << "x" << x << " y" << y << std::endl;
 				for (int i = 0; i < boundaryListLength; ++i) {
 					int pDot = x*boundaryList[i].diffy - y*boundaryList[i].diffx;
 					int cDot = x*boundaryList[i].diffx + y*boundaryList[i].diffy;
@@ -66,7 +67,7 @@ LRESULT __stdcall MouseHook(int nCode, WPARAM wParam, LPARAM lParam)
 					boundaryList[i].mouseState = mouseState;
 					boundaryList[i].mouseAlignment = mouseAlignment;
 					if (condition&&debounce) {//Mouse has just crossed the line
-											  //use saved data from last frame because windows can mess up the input values if it crossed a monitor border
+						//use saved data from last frame because windows can mess up the input values if it crossed a monitor border
 						int j = boundaryList[i].teleportTarget;
 						float tcDot = boundaryList[j].rDot + float(boundaryList[j].lDot - boundaryList[j].rDot)*float(boundaryList[i].cDot - boundaryList[i].lDot) / float(boundaryList[i].rDot - boundaryList[i].lDot);
 						float tpDot = boundaryList[j].dDot - max(0.0f, boundaryList[j].diffm*float(boundaryList[i].pDot - boundaryList[i].dDot)) / boundaryList[i].diffm;
@@ -100,7 +101,7 @@ LRESULT __stdcall MouseHook(int nCode, WPARAM wParam, LPARAM lParam)
 					int ly = b->diffy;
 					int rx = Cursor.x;//GET_X_LPARAM(lParam)
 					int ry = Cursor.y;//GET_Y_LPARAM(lParam)
-									  //compute precalculated values
+					//compute precalculated values
 					b->diffx = rx - lx;
 					b->diffy = ry - ly;
 					b->diff2 = float(b->diffx*b->diffx + b->diffy*b->diffy);
